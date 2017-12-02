@@ -3,6 +3,10 @@ version 14
 __lua__
 
 music(0)
+lx = 40 -- left position x
+ly = 56 -- left position y
+rx = 80 -- right position x
+ry = 56 -- right position y
 
 function _init()
     title_init()
@@ -13,6 +17,13 @@ function title_init()
 end
 
 function game_init()
+    player = {
+        x = 0,
+        y = 0,
+        sprite = 1,
+        state = 0, -- current state
+        stimer = 0 -- state timer
+    }
     gamestate = 1 -- main gameplay state
 end
 
@@ -31,7 +42,19 @@ function title_update()
 end
 
 function game_update()
-    
+    if ( btn( 4 ) ) then -- add transition check
+        if ( player.x == lx ) then
+            player.x = rx
+            player.y = ry
+        else
+            player.x = lx
+            player.y = ly
+        end
+    end
+    if ( btn( 5 ) ) then
+        player.x = rx
+        player.y = ry
+    end
 end
 
 function _draw()
@@ -49,8 +72,8 @@ function title_draw()
 end
 
 function game_draw()
-    spr( 1, 63, 63 ) -- placeholder
-    map(0, 0, 0, 0)
+    spr( player.sprite, player.x, player.y )
+    map( 0, 0, 0, 0 )
 end
 
 __gfx__
