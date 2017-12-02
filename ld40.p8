@@ -2,7 +2,6 @@ pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
 
-max_monsters = 128
 music(0)
 lx = 40 -- left position x
 ly = 56 -- left position y
@@ -16,7 +15,7 @@ function _init()
     actor = {}
     max_actors = 128
     juice_count = 0
-    bullet_speed = 12
+    bullet_speed = 2
 
 end
 
@@ -50,8 +49,8 @@ function title_update()
 end
 
 function game_update()
-    make_actor(1)
-    make_actor(2)
+    --make_actor(1, rnd( 128 ))
+    --make_actor(2, rnd( 128 ))
     move_actor()
     player.stimer += 1
     if ( player.state == 0 ) then -- platform state
@@ -59,8 +58,23 @@ function game_update()
     elseif ( player.state == 1 ) then -- jump state
         dash()
     end
-    if ( btn( 1 ) ) then
-        make_actor(3)
+    
+    if ( btnp( 0 ) and btnp( 2 ) ) then
+        make_actor(3, player.x, player.y, -1, -1)
+    elseif ( btnp( 1 ) and btnp( 2 ) ) then
+        make_actor(3, player.x, player.y, 1, -1)
+    elseif ( btnp( 1 ) and btnp( 3 ) ) then
+        make_actor(3, player.x, player.y, 1, 1)
+    elseif ( btnp( 0 ) and btnp( 3 ) ) then
+        make_actor(3, player.x, player.y, -1, 1)
+    elseif ( btnp( 3 ) ) then
+        make_actor(3, player.x, player.y, 0, 1)
+    elseif ( btnp( 0 ) ) then
+        make_actor(3, player.x, player.y, -1, 0)
+    elseif ( btnp( 1 ) ) then
+        make_actor(3, player.x, player.y, 1, 0)
+    elseif ( btnp( 2 ) ) then
+        make_actor(3, player.x, player.y, 0, -1)
     end
 end
 
@@ -86,13 +100,29 @@ end
 
 function move_actor()
     for a in all(actor) do
-        if ( a.x <= player.x+1 and a.x >= player.x-1 and a.y <= player.y+1 and a.y >= player.y-1 ) then
-            print("del")
-            del(actor,a)
+        if ( a.t == 3 ) then
+            move_bullet(a)
         else
-            if ( a.x < player.x ) then a.x += 1 elseif (a.x > player.x ) then a.x -= 1 end
-            if ( a.y < player.y ) then a.y += 1 elseif (a.y > player.y ) then a.y -= 1 end
+            move_enemy(a)
         end
+    end
+end
+
+function move_enemy(a)
+    if ( a.x <= player.x+1 and a.x >= player.x-1 and a.y <= player.y+1 and a.y >= player.y-1 ) then
+        del(actor,a)
+    else
+        if ( a.x < player.x ) then a.x += 1 elseif (a.x > player.x ) then a.x -= 1 end
+        if ( a.y < player.y ) then a.y += 1 elseif (a.y > player.y ) then a.y -= 1 end
+    end
+end
+
+function move_bullet(a)
+    if ( a.x > 128 or a.x < 0 or a.y > 128 or a.y < 0 ) then
+        del(actor,a)
+    else
+        a.x += a.dirX*bullet_speed
+        a.y += a.dirY*bullet_speed
     end
 end
 
@@ -102,19 +132,21 @@ function actor_draw()
     end
 end
 
-function make_actor(t, x, y)
+function make_actor(t, x, y, dirX, dirY)
     local a = {}
     a.life = 1
     a.t = t
-    a.x = rnd( 128 )
-    a.y = rnd( 128 )
+    a.x = x
+    a.y = y
+    a.dirX = dirX
+    a.dirY = dirY
     if (count(actor) < max_actors) then
         add(actor, a)
         if (a.t == 2) then
             juice_count += 1
         end
     end
-    return
+    return a
 end
 
 function start_dash()
@@ -144,16 +176,6 @@ end
 function switch_state( s )
     player.state = s
     player.stimer = 0
-end
-
-function move_bullet(e)
-    an = atan2(e.vy,e.vx)
-    e.vx = cos(an)*bullet_speed
-    e.vy = sin(an)*bullet_speed
-end
-
-function draw_bullet()
-
 end
 
 __gfx__
