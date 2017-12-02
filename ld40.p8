@@ -42,18 +42,13 @@ function title_update()
 end
 
 function game_update()
-    if ( btn( 4 ) ) then -- add transition check
-        if ( player.x == lx ) then
-            player.x = rx
-            player.y = ry
-        else
-            player.x = lx
-            player.y = ly
+    player.stimer += 1
+    if ( player.state == 0 ) then -- platform state
+        if ( btn( 4 ) ) then
+            switch_platform()
         end
-    end
-    if ( btn( 5 ) ) then
-        player.x = rx
-        player.y = ry
+    elseif ( player.state == 1 ) then -- transition state
+
     end
 end
 
@@ -74,6 +69,23 @@ end
 function game_draw()
     spr( player.sprite, player.x, player.y )
     map( 0, 0, 0, 0 )
+end
+
+function switch_platform()
+    if ( player.x == lx ) then
+        player.x = rx
+        player.y = ry
+    else
+        player.x = lx
+        player.y = ly
+    end
+
+    switch_state ( 1 )
+end
+
+function switch_state( s )
+    player.state = s
+    player.stimer = 0
 end
 
 __gfx__
