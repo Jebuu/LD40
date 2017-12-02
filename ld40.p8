@@ -30,8 +30,10 @@ end
 
 function game_init()
     player = {
-        x = rx, -- spawn player on right platform in the start
-        y = ry, 
+        pt = {
+            x = rx, -- spawn player on right platform in the start
+            y = ry
+        },
         sprite = 16,
         state = 0, -- current state
         stimer = 0 -- state timer
@@ -65,27 +67,29 @@ function game_update()
 
     player.stimer += 1
     if ( player.state == 0 ) then -- platform state
+        -- shooting with arrow keys
+        if ( btnp( 0 ) and btnp( 2 ) ) then
+            make_actor(3, player.x, player.y, -1, -1)
+        elseif ( btnp( 1 ) and btnp( 2 ) ) then
+            make_actor(3, player.x, player.y, 1, -1)
+        elseif ( btnp( 1 ) and btnp( 3 ) ) then
+            make_actor(3, player.x, player.y, 1, 1)
+        elseif ( btnp( 0 ) and btnp( 3 ) ) then
+            make_actor(3, player.x, player.y, -1, 1)
+        elseif ( btnp( 3 ) ) then
+            make_actor(3, player.x, player.y, 0, 1)
+        elseif ( btnp( 0 ) ) then
+            make_actor(3, player.x, player.y, -1, 0)
+        elseif ( btnp( 1 ) ) then
+            make_actor(3, player.x, player.y, 1, 0)
+        elseif ( btnp( 2 ) ) then
+            make_actor(3, player.x, player.y, 0, -1)
+        end
+        -- start the dash
         if ( btn( 4 ) ) then start_dash() end
+   
     elseif ( player.state == 1 ) then -- dash state
         dash()
-    end
-    
-    if ( btnp( 0 ) and btnp( 2 ) ) then
-        make_actor(3, player.x, player.y, -1, -1)
-    elseif ( btnp( 1 ) and btnp( 2 ) ) then
-        make_actor(3, player.x, player.y, 1, -1)
-    elseif ( btnp( 1 ) and btnp( 3 ) ) then
-        make_actor(3, player.x, player.y, 1, 1)
-    elseif ( btnp( 0 ) and btnp( 3 ) ) then
-        make_actor(3, player.x, player.y, -1, 1)
-    elseif ( btnp( 3 ) ) then
-        make_actor(3, player.x, player.y, 0, 1)
-    elseif ( btnp( 0 ) ) then
-        make_actor(3, player.x, player.y, -1, 0)
-    elseif ( btnp( 1 ) ) then
-        make_actor(3, player.x, player.y, 1, 0)
-    elseif ( btnp( 2 ) ) then
-        make_actor(3, player.x, player.y, 0, -1)
     end
 
     camera_position()
@@ -102,11 +106,11 @@ end
 
 function title_draw()
     print( "ludum dare 40", 37, 70, 14 )
-    print( "nice to meet you", 34, 80, 12 )
+    print( "press z or x to start", 34, 80, 12 )
 end
 
 function game_draw()
-    spr( player.sprite, player.x, player.y )
+    spr( player.sprite, player.pt.x, player.pt.y )
     map( 0, 0, 0, 0 )
     actor_draw()
     camera( flr(camposx + camoffsetx), flr(camposy + camoffsety) )
@@ -122,21 +126,22 @@ function move_actor()
     end
 end
 
-function move_enemy(a)
-    if ( a.x <= player.x+1 and a.x >= player.x-1 and a.y <= player.y+1 and a.y >= player.y-1 ) then
+function move_enemy( a )
+    if ( a:get_distance ( player.pt ) < 10 ) then
         del(actor,a)
     else
-        if ( a.x <= player.x ) then a.x += 1 elseif (a.x >= player.x ) then a.x -= 1 end
-        if ( a.y <= player.y ) then a.y += 1 elseif (a.y >= player.y ) then a.y -= 1 end
+        if ( a.x <= player.pt.x ) then a.x += 1 elseif (a.x >= player.pt.x ) then a.x -= 1 end
+        if ( a.y <= player.pt.y ) then a.y += 1 elseif (a.y >= player.pt.y ) then a.y -= 1 end
     end
 end
 
-function move_bullet(a)
+function move_bullet( a )
+
     if ( a.x > 128 or a.x < 0 or a.y > 128 or a.y < 0 ) then
         del(actor,a)
     else
-        a.x += a.dirX*bullet_speed
-        a.y += a.dirY*bullet_speed
+        a.x += a.dirx * bullet_speed
+        a.y += a.diry * bullet_speed
     end
 end
 
@@ -146,14 +151,18 @@ function actor_draw()
     end
 end
 
-function make_actor(t, x, y, dirX, dirY)
-    local a = {}
-    a.life = 1
-    a.t = t
-    a.x = x
-    a.y = y
-    a.dirX = dirX
-    a.dirY = dirY
+function make_actor(t, x, y, dirx, diry)
+    local a = {
+        life = 1,
+        t = t,
+        x = x,
+        y = y,
+        dirx = dirx,
+        diry = diry,
+        get_distance = function( self, pt )
+            return sqrt( ( self.x - pt.x )^2 + ( self.y - pt.y )^2 )
+        end
+        }
     if (count(actor) < max_actors) then
         add(actor, a)
         if (a.t == 2) then
@@ -164,7 +173,7 @@ function make_actor(t, x, y, dirX, dirY)
 end
 
 function start_dash()
-    if ( player.x == lx ) then -- set the target depending on which platform we are on
+    if ( player.pt.x == lx ) then -- set the target depending on which platform we are on
         targetx = rx
         targety = ry
     else
@@ -177,11 +186,11 @@ function start_dash()
 end
 
 function dash()
-    if ( player.x == targetx and player.y == targety ) then
+    if ( player.pt.x == targetx and player.pt.y == targety ) then
         end_dash()
     else
-        if ( targetx < player.x ) then player.x -= 1 elseif (targetx > player.x ) then player.x += 1 end
-        if ( targety < player.y ) then player.y -= 1 elseif (targety > player.y ) then player.y += 1 end
+        if ( targetx < player.pt.x ) then player.pt.x -= 1 elseif (targetx > player.pt.x ) then player.pt.x += 1 end
+        if ( targety < player.pt.y ) then player.pt.y -= 1 elseif (targety > player.pt.y ) then player.pt.y += 1 end
     end
 end
 
