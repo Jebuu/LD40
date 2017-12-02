@@ -14,6 +14,8 @@ function _init()
     actor = {}
     max_actors = 128
     juice_count = 0
+    bullet_speed = 12
+
 end
 
 function title_init()
@@ -46,7 +48,7 @@ function title_update()
 end
 
 function game_update()
-    make_actor(3)
+    make_actor(1)
     make_actor(2)
     move_actor()
     if ( btn( 4 ) ) then -- add transition check
@@ -61,6 +63,9 @@ function game_update()
     if ( btn( 5 ) ) then
         player.x = rx
         player.y = ry
+    end
+    if ( btn( 1 ) ) then
+        make_actor(3)
     end
 end
 
@@ -102,7 +107,7 @@ function actor_draw()
     end
 end
 
-function make_actor(t)
+function make_actor(t, x, y)
     local a = {}
     a.life = 1
     a.t = t
@@ -115,6 +120,16 @@ function make_actor(t)
         end
     end
     return a
+end
+
+function move_bullet(e)
+    an = atan2(e.vy,e.vx)
+    e.vx = cos(an)*bullet_speed
+    e.vy = sin(an)*bullet_speed
+end
+
+function draw_bullet()
+
 end
 
 __gfx__
