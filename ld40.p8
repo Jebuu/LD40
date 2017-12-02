@@ -11,9 +11,11 @@ lx = 40 -- left position x
 ly = 56 -- left position y
 rx = 80 -- right position x
 ry = 56 -- right position y
-targetx = 0
-targety = 0
 debug = true
+dash_target  = {
+    x = 0,
+    y = 0
+}
 
 -- sound effects starting from 10 -> 63
 snd=
@@ -36,11 +38,12 @@ function _init()
     max_actors = 128
     juice_count = 0
     bullet_speed = 2
+    dash_speed = 2
     shaker = {}
 end
 
 function title_init()
-    music(mus.title)
+    music( mus.title )
     gamestate = 0 -- title state
 end
 
@@ -243,11 +246,11 @@ end
 
 function start_dash()
     if ( player.pt.x == lx ) then -- set the target depending on which platform we are on
-        targetx = rx
-        targety = ry
+        dash_target.x = rx
+        dash_target.y = ry
     else
-        targetx = lx
-        targety = ly
+        dash_target.x = lx
+        dash_target.y = ly
     end
     player.sprite = 17
     create_screenshaker( 0, 5 )
@@ -255,11 +258,11 @@ function start_dash()
 end
 
 function dash()
-    if ( player.pt.x == targetx and player.pt.y == targety ) then
+    if ( get_distance ( player.pt, dash_target ) < 1 ) then
         end_dash()
     else
-        if ( targetx < player.pt.x ) then player.pt.x -= 1 elseif (targetx > player.pt.x ) then player.pt.x += 1 end
-        if ( targety < player.pt.y ) then player.pt.y -= 1 elseif (targety > player.pt.y ) then player.pt.y += 1 end
+        if ( dash_target.x < player.pt.x ) then player.pt.x -= 1 * dash_speed elseif (dash_target.x > player.pt.x ) then player.pt.x += 1 * dash_speed end
+        if ( dash_target.y < player.pt.y ) then player.pt.y -= 1 * dash_speed elseif (dash_target.y > player.pt.y ) then player.pt.y += 1 * dash_speed end
     end
 end
 
