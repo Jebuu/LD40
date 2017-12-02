@@ -3,6 +3,11 @@ version 14
 __lua__
 
 music(0)
+-- globals
+camposx = 0
+camposy = 0
+camoffsetx = 0
+camoffsety = 0
 lx = 40 -- left position x
 ly = 56 -- left position y
 rx = 80 -- right position x
@@ -16,7 +21,7 @@ function _init()
     max_actors = 128
     juice_count = 0
     bullet_speed = 2
-
+    shaker = {}
 end
 
 function title_init()
@@ -82,6 +87,8 @@ function game_update()
     elseif ( btnp( 2 ) ) then
         make_actor(3, player.x, player.y, 0, -1)
     end
+
+    camera_position()
 end
 
 function _draw()
@@ -102,6 +109,7 @@ function game_draw()
     spr( player.sprite, player.x, player.y )
     map( 0, 0, 0, 0 )
     actor_draw()
+    camera( flr(camposx + camoffsetx), flr(camposy + camoffsety) )
 end
 
 function move_actor()
@@ -164,6 +172,7 @@ function start_dash()
         targety = ly
     end
     player.sprite = 17
+    create_screenshaker( 0, 5 )
     switch_state ( 1 )
 end
 
@@ -184,6 +193,46 @@ end
 function switch_state( s )
     player.state = s
     player.stimer = 0
+end
+
+function camera_position()
+    camoffsetx = 0
+    camoffsety = 0
+    foreach (shaker, update_screenshaker)
+end
+
+function create_screenshaker(duration, pow)
+    foreach (shaker, del_screenshaker)
+    local s = {}
+    s.powx = rnd(pow * 2) - pow
+    s.powy = rnd(pow * 2) - pow
+    s.t = duration + 5
+    add(shaker, s)
+    return s
+end
+
+function update_screenshaker(sp)
+    if (sp.t < 0) then
+        del_screenshaker(sh)
+        return
+    end
+
+    if(sp.t < 5) then
+        sp.powx = (sp.powx * 0.5) - sp.powx 
+        sp.powy = (sp.powy * 0.5) - sp.powy
+    else
+        sp.powx = sp.powx * -1
+        sp.powy = sp.powy * -1
+    end
+    camoffsetx = camoffsetx + sp.powx
+    camoffsety = camoffsety + sp.powy
+    sp.t = sp.t - 1
+end
+
+function del_screenshaker(sh)
+    del( shaker, sh )
+    camoffsetx = 0
+    camoffsety = 0
 end
 
 __gfx__
