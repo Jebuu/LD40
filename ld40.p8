@@ -2,10 +2,14 @@ pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
 
+max_monsters = 128
 music(0)
 
 function _init()
     title_init()
+    actor = {}
+    max_actors = 128
+    juice_count = 0
 end
 
 function title_init()
@@ -31,7 +35,9 @@ function title_update()
 end
 
 function game_update()
-    
+    make_actor(3)
+    make_actor(2)
+    move_actor()
 end
 
 function _draw()
@@ -50,6 +56,43 @@ end
 
 function game_draw()
     spr( 1, 63, 63 ) -- placeholder
+    actor_draw()
+end
+
+function move_actor()
+    local t = {}
+    t.x = 63
+    t.y = 63
+    for a in all(actor) do
+        if ( a.x <= t.x+1 and a.x >= t.x-1 and a.y <= t.y+1 and a.y >= t.y-1 ) then
+            print("del")
+            del(actor,a)
+        else
+            if ( a.x < t.x ) then a.x += 1 elseif (a.x > t.x ) then a.x -= 1 end
+            if ( a.y < t.y ) then a.y += 1 elseif (a.y > t.y ) then a.y -= 1 end
+        end
+    end
+end
+
+function actor_draw()
+    for a in all(actor) do
+        spr(a.t, a.x, a.y)
+    end
+end
+
+function make_actor(t)
+    local a = {}
+    a.life = 1
+    a.t = t
+    a.x = rnd( 128 )
+    a.y = rnd( 128 )
+    if (count(actor) < max_actors) then
+        add(actor, a)
+        if (a.t == 2) then
+            juice_count += 1
+        end
+    end
+    return a
 end
 
 __gfx__
