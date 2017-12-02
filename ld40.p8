@@ -1,23 +1,55 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
-t = 0
 
 music(0)
 
+function _init()
+    title_init()
+end
+
+function title_init()
+    gamestate = 0 -- title state
+end
+
+function game_init()
+    gamestate = 1 -- main gameplay state
+end
+
 function _update()
-    t += 1
+    if( gamestate == 0 ) then
+        title_update()
+    else
+        game_update()
+    end
+end
+
+function title_update()
+    if ( btn( 4 ) or btn( 5 ) ) then
+        game_init()
+    end
+end
+
+function game_update()
+    
 end
 
 function _draw()
     cls()
-    
+    if( gamestate == 0 ) then
+        title_draw()
+    else
+        game_draw()
+    end
+end
+
+function title_draw()
     print( "ludum dare 40", 37, 70, 14 )
     print( "nice to meet you", 34, 80, 12 )
+end
 
-    -- frame counter 
-    rectfill( 0, 0, 35, 6, 5 )
-    print( "t: "..t, 1, 1, 7 )
+function game_draw()
+    spr( 1, 63, 63 ) -- placeholder
 end
 
 __gfx__
