@@ -190,14 +190,13 @@ function move_actor()
     end
 end
 
-function move_enemy( a )
-    if ( get_distance( a.pt, player.pt ) < hit_margin ) then
+function move_enemy( e )
+    if ( get_distance( e.pt, player.pt ) < hit_margin ) then
         juice_count -= 1
         sfx(snd.lose_juice)
-        del( enemies, a)
+        del( enemies, e)
     else
-        if ( a.pt.x <= player.pt.x ) then a.pt.x += 1 elseif ( a.pt.x >= player.pt.x ) then a.pt.x -= 1 end
-        if ( a.pt.y <= player.pt.y ) then a.pt.y += 1 elseif ( a.pt.y >= player.pt.y ) then a.pt.y -= 1 end
+        move_towards_point ( e, player.pt, 1 )
     end
 end
 
@@ -211,7 +210,7 @@ function move_juice( a )
             a.tpt.y = ry -5
         end
     end
-    if ( get_distance( a.pt, player.pt ) < hit_margin*2 ) then
+    if ( get_distance( a.pt, player.pt ) < hit_margin ) then
         juice_count += 1
         sfx(snd.gain_juice)
         del( juices, a)
@@ -241,6 +240,18 @@ function move_bullet( b )
     end
 end
 
+function move_towards_point( obj, pt, speed )
+    dx = obj.pt.x - pt.x 
+    dy = obj.pt.y - pt.y 
+
+    angle = atan2( dy, dx ) * 5
+    local vx = cos( angle ) * speed;
+    local vy = sin( angle ) * speed;
+
+    obj.pt.x += vx
+    obj.pt.y -= vy
+end
+
 function actor_draw()
     
     if ( player.state == 1) then
@@ -248,7 +259,6 @@ function actor_draw()
     elseif ( player.state == 0) then
         spr( player.sprite, player.pt.x, player.pt.y )
     end
-
 
     for b in all( bullets ) do
         spr( b.type, b.pt.x, b.pt.y )
@@ -260,7 +270,6 @@ function actor_draw()
     end
 
     for j in all( juices ) do
-        spr( 160, j.pt.x, j.pt.y)
         if (not j.col) j.col = 0
         j.col += 1
         if (j.col >= 16) j.col = 0
@@ -300,6 +309,7 @@ function make_actor(t, x, y, dirx, diry, sf, fc, as)
         if ( a.type == 1 ) then -- enemy
             a.list = enemies
             add( a.list, a )
+            move_towards_point ( a, player.pt, 1 )
         end
         if ( a.type == 2 ) then -- juice
             a.list = juices
