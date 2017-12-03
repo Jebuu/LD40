@@ -37,12 +37,12 @@ mus=
 }
 
 function _init()
+    poke(0x5f2d, 1)
     title_init()
 end
 
 function title_init()
     music( mus.title )
-    poke(0x5f2d, 1)
     gamestate = 0 -- title state
     bullets = {}
     enemies = {}
@@ -107,19 +107,19 @@ function game_update()
     if ( juice_count < 0 ) then
         title_init()
         return
-    end -- function make_actor(t, x, y, dirx, diry, sf, fc, as)
+    end -- function make_actor(t, x, y, sf, fc, as)
     if ( t %  simple_round(100, juice_count) == 0) then -- adjust enemy the spawn rate here 
         if ( flr( rnd( 2 ) ) == 0 ) then 
-            make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0, 128, 4, 10)
+            make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 128, 4, 10)
         else
-            make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0, 128, 4, 10)
+            make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 128, 4, 10)
         end
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
         if ( flr( rnd( 2 ) ) == 0 ) then 
-            make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0)
+            make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, rnd( 5 ) + 50, 0)
         else
-            make_actor(2, flr( rnd( 2 ) ) * 128, rnd ( 128 ), 0, 0)
+            make_actor(2, flr( rnd( 2 ) ) * 128, rnd ( 128 ), rnd( 5 ) + 50, 0)
         end
     end
     move_actor()
@@ -314,7 +314,6 @@ function actor_draw()
         spr( player.sprite, player.pt.x, player.pt.y )
     end
 
-
     for b in all( bullets ) do
         spr( b.type, b.pt.x, b.pt.y )
     end
@@ -325,19 +324,18 @@ function actor_draw()
     end
 
     for j in all( juices ) do
-        spr( 160, j.pt.x, j.pt.y)
         if (not j.col) j.col = 0
         j.col += 1
         if (j.col >= 16) j.col = 0
         for i = 0, 16 do
             pal(i, i + j.col)
         end
-        spr( j.type, j.pt.x, j.pt.y)
+        spr( j.sf, j.pt.x, j.pt.y)
         pal()
     end
 end
 
-function make_actor(t, x, y, dirx, diry, sf, fc, as)
+function make_actor(t, x, y, sf, fc, as)
     local a = {
         life = 1,
         type = t,
