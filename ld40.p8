@@ -164,12 +164,12 @@ end
 --right
 -- top
 -- bototm
-function set_aim(x, y, dirX, dirY)
+function set_aim(x, y, dirx, diry)
     mouse_aim = false
     aim.x = x + 4
     aim.y = y
-    aim.dirX = dirX
-    aim.dirY = dirY
+    aim.dirx = dirx
+    aim.diry = diry
     aim.c = 3
 end
 
@@ -273,13 +273,14 @@ function move_juice( a )
     else
         if ( a.pt.x <= a.tpt.x ) then a.pt.x += 1 elseif ( a.pt.x >= a.tpt.x ) then a.pt.x -= 1 end
         if ( a.pt.y <= a.tpt.y ) then a.pt.y += 1 elseif ( a.pt.y >= a.tpt.y ) then a.pt.y -= 1 end
-        trail( a, 224, 2, 2 + rnd(2), 10, rnd(3)-2, rnd(3)-2, 6 )
+        trail( a, 224, 2, 2 + rnd(2), rnd(3)-2, rnd(3)-2, 6 )
     end
 end
 
 function move_bullet( b )  
-    b.pt.x -= bullet_speed * b.dirX
-    b.pt.y -= bullet_speed * b.dirY
+    b.pt.x -= bullet_speed * b.dirx
+    b.pt.y -= bullet_speed * b.diry
+    trail( b, 240, 3, 1, rnd(3)-2, rnd(3)-2, 10 )
     
     if ( b.pt.x > 128 or b.pt.x < 0 or b.pt.y > 128 or b.pt.y < 0 ) then
         del( bullets, b)
@@ -372,11 +373,11 @@ function make_actor(t, x, y, sf, fc, as)
             if ( mouse_aim ) then
                 local v=m_vec(x-aim.x2,y-aim.y2)
                 local d,l=v:getnorm()
-                a.dirX = d.x
-                a.dirY = d.y
+                a.dirx = d.x
+                a.diry = d.y
             else
-                a.dirX = aim.dirX 
-                a.dirY = aim.dirY
+                a.dirx = aim.dirx 
+                a.diry = aim.diry
             end
 
             sfx( snd.pew )
@@ -415,7 +416,7 @@ function dash()
     else
         if ( dash_target.x < player.pt.x ) then player.pt.x -= 1 * dash_speed elseif (dash_target.x > player.pt.x ) then player.pt.x += 1 * dash_speed end
         player.pt.y = dash_target.y + sin( player.stimer / 40 ) * 10
-        trail( player, 208, 3, 1, 10, rnd(3)-2, rnd(3)-2, 10 )
+        trail( player, 208, 3, 1, rnd(3)-2, rnd(3)-2, 10 )
     end
 end
 
@@ -533,7 +534,7 @@ function update_particles()
 end
 
 function draw_particles()
-    for p in all( particles) do
+    for p in all( particles ) do
         p:draw()
     end
 end
@@ -659,7 +660,7 @@ function m_vec(x,y)
 	}
 	return v
 end
-function trail( object, frame, framecount, ratio, animspeed, xoffset, yoffset, animspeed )
+function trail( object, frame, framecount, ratio, xoffset, yoffset, animspeed )
     if (not object.e_t) object.e_t = 0
     object.e_t += 1
     if ( object.e_t >= ratio ) then
@@ -804,10 +805,10 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00099000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00999900000990000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00999900000990000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00099000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
