@@ -12,7 +12,7 @@ lx = 40 -- left position x
 ly = 56 -- left position y
 rx = 80 -- right position x
 ry = 56 -- right position y
-debug = true
+debug = false
 hittaken = false
 mouse_aim = true
 dash_target  = {
@@ -146,10 +146,10 @@ function game_update()
     end
     if ( player.state == 0 ) then -- platform state
         -- start the dash
-        if ( btn( 4 ) ) then start_dash() end
+        if ( btn( 4 ) or mouse.btn_state[2] ) then start_dash() end
         -- shoot
         -- shooting with arrow keys
-        if ( btn( 5 ) ) then make_actor(3, player.pt.x, player.pt.y) end
+        if ( btn( 5 ) or mouse.btn_state[1] ) then make_actor(3, player.pt.x, player.pt.y) end
     elseif ( player.state == 1 ) then -- dash state
         dash()
     end
