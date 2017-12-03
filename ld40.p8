@@ -149,15 +149,21 @@ function game_update()
         if ( btn( 4 ) or mouse.btn_state[2] ) then start_dash() end
         -- shoot
         -- shooting with arrow keys
-        if ( ( btn( 5 ) or mouse.btn_state[1] ) and t > st + ( 10 - flr( juice_count / 2 ) ) ) then
-            st = t
-            make_actor(3, player.pt.x, player.pt.y)
+        if ( ( btn( 5 ) or mouse.btn_state[1] ) ) then
+            shoot()
         end
     elseif ( player.state == 1 ) then -- dash state
         dash()
     end
     update_particles()
     camera_position()
+end
+
+function shoot()
+    if (t > st + ( 10 - flr( juice_count / 2 ) )) then
+        st = t
+        make_actor(3, player.pt.x, player.pt.y)
+    end
 end
 
 --left
@@ -219,10 +225,10 @@ function debug_draw()
 
     -- show current value of actors
     rectfill( 0, 90, 30, 96, 5 )
-    print( "juice: "..juice_count, 1, 91, 7 )
+    print( "x2: "..aim.x2, 1, 91, 7 )
 
     rectfill( 0, 96, 30, 102, 5 )
-    print( "b: "..count( bullets ), 1, 97, 7 )
+    print( "y2: "..aim.y2, 1, 97, 7 )
     
     rectfill( 0, 102, 30, 108, 5 )
     print( "a: "..atan2( mouse.pos.x - player.pt.x, player.pt.y - mouse.pos.y ), 1, 103, 7 )
@@ -394,7 +400,12 @@ function make_actor(t, x, y, sf, fc, as)
             add( a.list, a )
         end
         if ( a.type == 3 ) then -- bullet
-            if ( mouse_aim ) then
+            if ( player.state == 1 ) then
+                local v=m_vec( rnd(100) *2 - 100, rnd(100) *2 - 100)
+                local d,l=v:getnorm()
+                a.dirx = d.x
+                a.diry = d.y
+            elseif ( mouse_aim ) then
                 local v=m_vec(x-aim.x2,y-aim.y2)
                 local d,l=v:getnorm()
                 a.dirx = d.x
@@ -441,6 +452,7 @@ function dash()
         if ( dash_target.x < player.pt.x ) then player.pt.x -= 1 * dash_speed elseif (dash_target.x > player.pt.x ) then player.pt.x += 1 * dash_speed end
         player.pt.y = dash_target.y + sin( player.stimer / 40 ) * 10
         trail( player, 208, 3, 1, rnd(3)-2, rnd(3)-2, 10 )
+        shoot()
     end
 end
 
