@@ -54,7 +54,7 @@ function game_init()
             x = rx, -- spawn player on right platform in the start
             y = ry
         },
-        sprite = 16,
+        sprite = 64,
         state = 0, -- current state
         stimer = 0 -- state timer
     }
@@ -136,8 +136,9 @@ function title_draw()
 end
 
 function game_draw()
-    spr( player.sprite, player.pt.x, player.pt.y )
+    rectfill( 0, 0, 127, 127, 11 )
     map( 0, 0, 0, 0 )
+    spr( player.sprite, player.pt.x, player.pt.y )
     actor_draw()
     
     if ( debug ) then
@@ -288,7 +289,7 @@ function start_dash()
         dash_target.x = lx
         dash_target.y = ly
     end
-    player.sprite = 17
+    player.sprite = 65
     create_screenshaker( 0, 5 )
     switch_state ( 1 )
 end
@@ -303,7 +304,7 @@ function dash()
 end
 
 function end_dash()
-    player.sprite = 16
+    player.sprite = 64
     switch_state ( 0 ) -- back to idle state
 end
 
