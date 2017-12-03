@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
-globald=0
+
 -- globals
 camposx = 0
 camposy = 0
@@ -14,6 +14,7 @@ rx = 80 -- right position x
 ry = 56 -- right position y
 debug = true
 hittaken = false
+mouse_aim = true
 dash_target  = {
     x = 0,
     y = 0
@@ -124,14 +125,24 @@ function game_update()
     move_actor()
 
     player.stimer += 1
-    if ( btn( 3 ) ) then
-        set_aim( player.pt.x, player.pt.y, 3)
+    if ( btn( 0 ) and btn( 2 ) ) then
+        set_aim( player.pt.x, player.pt.y, 1, 1)
+    elseif ( btn( 1 ) and btn( 2 ) ) then
+        set_aim( player.pt.x, player.pt.y, -1, 1)
+    elseif ( btn( 1 ) and btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, -1, -1)
+    elseif ( btn( 0 ) and btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, 1, -1)
+    elseif ( btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, 0, -1)
     elseif ( btn( 0 ) ) then
-        set_aim( player.pt.x, player.pt.y, 0)
+        set_aim( player.pt.x, player.pt.y, 1, 0)
     elseif ( btn( 1 ) ) then
-        set_aim( player.pt.x, player.pt.y, 1)
+        set_aim( player.pt.x, player.pt.y, -1, 0)
     elseif ( btn( 2 ) ) then
-        set_aim( player.pt.x, player.pt.y, 2)
+        set_aim( player.pt.x, player.pt.y, 0, 1)
+    else
+        mouse_aim = true
     end
     if ( player.state == 0 ) then -- platform state
         -- start the dash
@@ -149,20 +160,12 @@ end
 --right
 -- top
 -- bototm
-function set_aim(x, y, btn)
-    local sign = 1
-    if ( btn == 0 or btn == 2 ) then
-        sign = -1
-    end
+function set_aim(x, y, dirX, dirY)
+    mouse_aim = false
     aim.x = x + 4
     aim.y = y
-    radius = 60
-    if (aim.a > 360) then aim.a = 20 end
-    if (aim.a < 0) then aim.a = 340 end
-
-    aim.a += 5 * sign;
-    aim.x2=aim.x + radius * cos(aim.a/360)
-    aim.y2=aim.y + radius * sin(aim.a/360)
+    aim.dirX = dirX
+    aim.dirY = dirY
     aim.c = 3
 end
 
@@ -218,8 +221,8 @@ function debug_draw()
     rectfill( 0, 96, 30, 102, 5 )
     print( "b: "..count( bullets ), 1, 97, 7 )
     
-    rectfill( 0, 102, 30, 108, 5 )
-    print( "y: "..globald, 1, 103, 7 )
+    --rectfill( 0, 102, 30, 108, 5 )
+    --print( "y: "..aim.x2, 1, 103, 7 )
 end
 
 function move_actor()
@@ -353,10 +356,15 @@ function make_actor(t, x, y, dirx, diry, sf, fc, as)
             add( a.list, a )
         end
         if ( a.type == 3 ) then -- bullet
-            local v=m_vec(x-aim.x2,y-aim.y2)
-	        local d,l=v:getnorm()
-            a.dirX = d.x
-            a.dirY = d.y
+            if ( mouse_aim ) then
+                local v=m_vec(x-aim.x2,y-aim.y2)
+                local d,l=v:getnorm()
+                a.dirX = d.x
+                a.dirY = d.y
+            else
+                a.dirX = aim.dirX 
+                a.dirY = aim.dirY
+            end
 
             sfx( snd.pew )
             a.list = bullets
