@@ -91,7 +91,6 @@ function _update()
     else
         game_update()
     end
-    update_particles()
 end
 
 function title_update()
@@ -157,6 +156,7 @@ function game_update()
     elseif ( player.state == 1 ) then -- dash state
         dash()
     end
+    update_particles()
     camera_position()
 end
 
@@ -181,7 +181,6 @@ function _draw()
     else
         game_draw()
     end
-    draw_particles()
 end
 
 function title_draw()
@@ -199,7 +198,7 @@ function game_draw()
     rectfill( 0, 0, 127, 127, 11 )
     map( 0, 0, 0, 0 )
     pal()
-
+    draw_particles()
     actor_draw()
     
     if ( debug ) then
