@@ -121,10 +121,6 @@ function _draw()
     else
         game_draw()
     end
-
-    if ( debug ) then
-        debug_draw()
-    end
 end
 
 function title_draw()
@@ -136,6 +132,11 @@ function game_draw()
     spr( player.sprite, player.pt.x, player.pt.y )
     map( 0, 0, 0, 0 )
     actor_draw()
+    
+    if ( debug ) then
+        debug_draw()
+    end
+
     camera( flr(camposx + camoffsetx), flr(camposy + camoffsety) )
 end
 
@@ -146,6 +147,9 @@ function debug_draw()
 
     rectfill( 0, 96, 30, 102, 5 )
     print( "b: "..count( bullets ), 1, 97, 7 )
+    
+    rectfill( 0, 102, 30, 108, 5 )
+    print( "y: "..sin ( player.stimer / 100 ), 1, 103, 7 )
 end
 
 function move_actor()
@@ -275,7 +279,7 @@ function dash()
         end_dash()
     else
         if ( dash_target.x < player.pt.x ) then player.pt.x -= 1 * dash_speed elseif (dash_target.x > player.pt.x ) then player.pt.x += 1 * dash_speed end
-        if ( dash_target.y < player.pt.y ) then player.pt.y -= 1 * dash_speed elseif (dash_target.y > player.pt.y ) then player.pt.y += 1 * dash_speed end
+        player.pt.y = dash_target.y + sin( player.stimer / 40 ) * 10
     end
 end
 
