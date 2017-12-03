@@ -258,11 +258,7 @@ function move_juice( a )
             a.tpt.y = ry -5
         end
     end
-<<<<<<< HEAD
-    if ( get_distance( a.pt, player.pt ) < hit_margin ) then
-=======
     if ( get_distance( a.pt, player.pt ) < 4*2 ) then
->>>>>>> ad1d899c3406acd743021ac33b5563b6da010f2c
         juice_count += 1
         sfx(snd.gain_juice)
         del( juices, a)
