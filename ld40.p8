@@ -79,8 +79,8 @@ function game_update()
     t += 1  -- increase the frame counter
     
     if ( t % 100 == 0) then -- adjust the spawn rate here
-        make_actor(1, rnd( 128 ), rnd( 128 ), 0, 0)
-        make_actor(2, rnd( 128 ), rnd( 128 ), 0, 0)
+        make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0) -- currently spawning only from the sides
+        make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0) -- currently spawning only from top/bottom
     end
     move_actor()
 
@@ -188,8 +188,10 @@ function move_bullet( b )
         del( bullets, b)
     elseif ( count( bullets ) > 0) then
         for e in all( enemies ) do
-            if ( get_distance ( b.pt, e.pt ) < 10 ) then
+            if ( get_distance ( b.pt, e.pt ) < 5 ) then
                 del( bullets, b )
+                e:take_damage ( 1 )
+                break
             end
         end
     end
@@ -219,19 +221,30 @@ function make_actor(t, x, y, dirx, diry)
         },
         dirx = dirx,
         diry = diry,
+        list = nil,
+        take_damage = function ( self, dmg )
+                    self.life -= dmg
+                    if ( self.life <= 0 ) then
+                        del (self.list, self)
+                    end
+                 end
+
     }
 
     if ( actor_count() < max_actors ) then
-        if ( a.type == 1 ) then
-            add( enemies, a )
+        if ( a.type == 1 ) then -- enemy
+            a.list = enemies
+            add( a.list, a )
         end
-        if ( a.type == 2 ) then
+        if ( a.type == 2 ) then -- juice
             juice_count += 1
-            add( juices, a )
+            a.list = juices
+            add( a.list, a )
         end
-        if ( a.type == 3 ) then
+        if ( a.type == 3 ) then -- bullet
             sfx( snd.pew )
-            add( bullets, a )
+            a.list = bullets
+            add( a.list, a )
         end
     end
 end
