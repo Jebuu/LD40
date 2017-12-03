@@ -149,7 +149,7 @@ function game_update()
         if ( btn( 4 ) or mouse.btn_state[2] ) then start_dash() end
         -- shoot
         -- shooting with arrow keys
-        if ( (btn( 5 ) or mouse.btn_state[1]) and t > st + (6 - juice_count) ) then
+        if ( ( btn( 5 ) or mouse.btn_state[1] ) and t > st + ( 10 - flr( juice_count / 2 ) ) ) then
             st = t
             make_actor(3, player.pt.x, player.pt.y)
         end
@@ -250,7 +250,7 @@ function move_enemy( e )
         sfx(snd.lose_juice)
         del( enemies, e)
     else
-        move_towards_point ( e, player.pt, 1 )
+        move_towards_point ( e, player.pt, 1, 5 )
     end
 end
 
@@ -294,11 +294,11 @@ function move_bullet( b )
     end
 end
 
-function move_towards_point( obj, pt, speed )
+function move_towards_point( obj, pt, speed, curve )
     dx = obj.pt.x - pt.x 
     dy = obj.pt.y - pt.y 
 
-    angle = atan2( dy, dx ) * 5
+    angle = atan2( dy, dx ) * curve
     local vx = cos( angle ) * speed;
     local vy = sin( angle ) * speed;
 
@@ -348,6 +348,7 @@ function make_actor(t, x, y, sf, fc, as)
         },
         a = a,
         list = nil,
+        update = nil,
         take_damage = function ( self, dmg )
                     self.life -= dmg
                     if ( self.life <= 0 ) then
@@ -593,13 +594,7 @@ function m_mouse()
 				self.btn_state_prev[k]=band(stat(34),k)!=0
 			end
 		end,
-		--[[
-		todo: knock enemy into air. hit while airborn to kill. maybe bubble bobble style levels.
-		fire spit enemy
-		electric enemy
-		multihit enemy (shell)
-		teleporter (attack forward and then behind)
-		]]
+
 		draw=function(self)
 			--if (p1.dash_count>0) pal(7,8)
 			--spr(16,self.pos.x-3,self.pos.y-3)
