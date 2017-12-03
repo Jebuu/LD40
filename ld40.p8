@@ -7,6 +7,7 @@ camposx = 0
 camposy = 0
 camoffsetx = 0
 camoffsety = 0
+hit_margin = 9
 lx = 40 -- left position x
 ly = 56 -- left position y
 rx = 80 -- right position x
@@ -32,6 +33,11 @@ mus=
 
 function _init()
     title_init()
+end
+
+function title_init()
+    music( mus.title )
+    gamestate = 0 -- title state
     bullets = {}
     enemies = {}
     juices = {}
@@ -40,11 +46,6 @@ function _init()
     bullet_speed = 2
     dash_speed = 2
     shaker = {}
-end
-
-function title_init()
-    music( mus.title )
-    gamestate = 0 -- title state
 end
 
 function game_init()
@@ -76,10 +77,16 @@ function title_update()
 end
 
 function game_update()
-    t += 1  -- increase the frame counter
-    
-    if ( t % 100 == 0) then -- adjust the spawn rate here
+    t += 1 -- increase the frame counter
+
+    if ( juice_count < 0 ) then
+        title_init()
+        return
+    end
+    if ( t %  simple_round(50, juice_count) == 0) then -- adjust enemy the spawn rate here
         make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0) -- currently spawning only from the sides
+    end
+    if ( t % 100 == 50) then -- adjust juice the spawn rate here
         make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0) -- currently spawning only from top/bottom
     end
     move_actor()
@@ -142,7 +149,7 @@ end
 function debug_draw()
     -- show current value of actors
     rectfill( 0, 90, 30, 96, 5 )
-    print( "a: "..actor_count(), 1, 91, 7 )
+    print( "juice: "..juice_count, 1, 91, 7 )
 
     rectfill( 0, 96, 30, 102, 5 )
     print( "b: "..count( bullets ), 1, 97, 7 )
@@ -154,16 +161,17 @@ function move_actor()
     end
 
     for e in all( enemies ) do
-            move_enemy( e )
+        move_enemy( e )
     end
 
     for j in all( juices ) do
-            move_juice( j )
+        move_juice( j )
     end
 end
 
 function move_enemy( a )
-    if ( get_distance( a.pt, player.pt ) < 10 ) then
+    if ( get_distance( a.pt, player.pt ) < hit_margin ) then
+        juice_count -= 1
         del( enemies, a)
     else
         if ( a.pt.x <= player.pt.x ) then a.pt.x += 1 elseif ( a.pt.x >= player.pt.x ) then a.pt.x -= 1 end
@@ -172,11 +180,23 @@ function move_enemy( a )
 end
 
 function move_juice( a )
-    if ( get_distance( a.pt, player.pt ) < 10 ) then
+    if ( a.tpt == nil ) then
+        a.tpt = {}
+        a.tpt.x = lx
+        a.tpt.y = ly -5
+        if ( rnd(2) <= 1 ) then
+            a.tpt.x = rx
+            a.tpt.y = ry -5
+        end
+    end
+    if ( get_distance( a.pt, player.pt ) < hit_margin*2 ) then
+        juice_count += 1
+        del( juices, a)
+    elseif ( get_distance( a.pt, a.tpt ) < hit_margin/2 ) then
         del( juices, a)
     else
-        if ( a.pt.x <= player.pt.x ) then a.pt.x += 1 elseif ( a.pt.x >= player.pt.x ) then a.pt.x -= 1 end
-        if ( a.pt.y <= player.pt.y ) then a.pt.y += 1 elseif ( a.pt.y >= player.pt.y ) then a.pt.y -= 1 end
+        if ( a.pt.x <= a.tpt.x ) then a.pt.x += 1 elseif ( a.pt.x >= a.tpt.x ) then a.pt.x -= 1 end
+        if ( a.pt.y <= a.tpt.y ) then a.pt.y += 1 elseif ( a.pt.y >= a.tpt.y ) then a.pt.y -= 1 end
     end
 end
 
@@ -237,7 +257,6 @@ function make_actor(t, x, y, dirx, diry)
             add( a.list, a )
         end
         if ( a.type == 2 ) then -- juice
-            juice_count += 1
             a.list = juices
             add( a.list, a )
         end
@@ -329,6 +348,9 @@ function del_screenshaker(sh)
     camoffsety = 0
 end
 
+function simple_round(a, b)
+    return (a - a % b) / b
+end
 __gfx__
 000000000000000000000000000000002244442200000000dddddddd000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000009999990000000002244424400000000d6666661000000000000000000000000000000000000000000000000000000000000000000000000
