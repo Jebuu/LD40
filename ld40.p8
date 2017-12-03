@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
-globald=0
+
 -- globals
 camposx = 0
 camposy = 0
@@ -14,6 +14,7 @@ rx = 80 -- right position x
 ry = 56 -- right position y
 debug = false
 hittaken = false
+mouse_aim = true
 dash_target  = {
     x = 0,
     y = 0
@@ -81,6 +82,7 @@ function game_init()
     mouse=m_mouse()
     gamestate = 1 -- main gameplay state
     t = 0 -- frame counter
+    st = -1 -- shoot frame counter
 end
 
 function _update()
@@ -108,14 +110,14 @@ function game_update()
         return
     end -- function make_actor(t, x, y, dirx, diry, sf, fc, as)
     if ( t %  simple_round(100, juice_count) == 0) then -- adjust enemy the spawn rate here 
-        if ( flr( rnd( 2 ) ) ) then 
+        if ( flr( rnd( 2 ) ) == 0 ) then 
             make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0, 128, 4, 10)
         else
             make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0, 128, 4, 10)
         end
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
-        if ( flr( rnd( 2 ) ) ) then 
+        if ( flr( rnd( 2 ) ) == 0 ) then 
             make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0)
         else
             make_actor(2, flr( rnd( 2 ) ) * 128, rnd ( 128 ), 0, 0)
@@ -124,21 +126,34 @@ function game_update()
     move_actor()
 
     player.stimer += 1
-    if ( btn( 3 ) ) then
-        set_aim( player.pt.x, player.pt.y, 3)
+    if ( btn( 0 ) and btn( 2 ) ) then
+        set_aim( player.pt.x, player.pt.y, 1, 1)
+    elseif ( btn( 1 ) and btn( 2 ) ) then
+        set_aim( player.pt.x, player.pt.y, -1, 1)
+    elseif ( btn( 1 ) and btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, -1, -1)
+    elseif ( btn( 0 ) and btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, 1, -1)
+    elseif ( btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, 0, -1)
     elseif ( btn( 0 ) ) then
-        set_aim( player.pt.x, player.pt.y, 0)
+        set_aim( player.pt.x, player.pt.y, 1, 0)
     elseif ( btn( 1 ) ) then
-        set_aim( player.pt.x, player.pt.y, 1)
+        set_aim( player.pt.x, player.pt.y, -1, 0)
     elseif ( btn( 2 ) ) then
-        set_aim( player.pt.x, player.pt.y, 2)
+        set_aim( player.pt.x, player.pt.y, 0, 1)
+    else
+        mouse_aim = true
     end
     if ( player.state == 0 ) then -- platform state
         -- start the dash
-        if ( btn( 4 ) ) then start_dash() end
+        if ( btn( 4 ) or mouse.btn_state[2] ) then start_dash() end
         -- shoot
         -- shooting with arrow keys
-        if ( btn( 5 ) ) then make_actor(3, player.pt.x, player.pt.y) end
+        if ( (btn( 5 ) or mouse.btn_state[1]) and t > st + (6 - juice_count) ) then
+            st = t
+            make_actor(3, player.pt.x, player.pt.y)
+        end
     elseif ( player.state == 1 ) then -- dash state
         dash()
     end
@@ -149,20 +164,12 @@ end
 --right
 -- top
 -- bototm
-function set_aim(x, y, btn)
-    local sign = 1
-    if ( btn == 0 or btn == 2 ) then
-        sign = -1
-    end
+function set_aim(x, y, dirX, dirY)
+    mouse_aim = false
     aim.x = x + 4
     aim.y = y
-    radius = 60
-    if (aim.a > 360) then aim.a = 20 end
-    if (aim.a < 0) then aim.a = 340 end
-
-    aim.a += 5 * sign;
-    aim.x2=aim.x + radius * cos(aim.a/360)
-    aim.y2=aim.y + radius * sin(aim.a/360)
+    aim.dirX = dirX
+    aim.dirY = dirY
     aim.c = 3
 end
 
@@ -218,8 +225,8 @@ function debug_draw()
     rectfill( 0, 96, 30, 102, 5 )
     print( "b: "..count( bullets ), 1, 97, 7 )
     
-    rectfill( 0, 102, 30, 108, 5 )
-    print( "y: "..globald, 1, 103, 7 )
+    --rectfill( 0, 102, 30, 108, 5 )
+    --print( "y: "..aim.x2, 1, 103, 7 )
 end
 
 function move_actor()
@@ -272,8 +279,8 @@ function move_juice( a )
 end
 
 function move_bullet( b )  
-    b.pt.x -= bullet_speed * b.dirx
-    b.pt.y -= bullet_speed * b.diry
+    b.pt.x -= bullet_speed * b.dirX
+    b.pt.y -= bullet_speed * b.dirY
     
     if ( b.pt.x > 128 or b.pt.x < 0 or b.pt.y > 128 or b.pt.y < 0 ) then
         del( bullets, b)
@@ -308,6 +315,7 @@ function actor_draw()
         spr( player.sprite, player.pt.x, player.pt.y )
     end
 
+
     for b in all( bullets ) do
         spr( b.type, b.pt.x, b.pt.y )
     end
@@ -318,6 +326,7 @@ function actor_draw()
     end
 
     for j in all( juices ) do
+        spr( 160, j.pt.x, j.pt.y)
         if (not j.col) j.col = 0
         j.col += 1
         if (j.col >= 16) j.col = 0
@@ -356,17 +365,21 @@ function make_actor(t, x, y, dirx, diry, sf, fc, as)
         if ( a.type == 1 ) then -- enemy
             a.list = enemies
             add( a.list, a )
-            move_towards_point ( a, player.pt, 1 )
         end
         if ( a.type == 2 ) then -- juice
             a.list = juices
             add( a.list, a )
         end
         if ( a.type == 3 ) then -- bullet
-            local v=m_vec(x-aim.x2,y-aim.y2)
-	        local d,l=v:getnorm()
-            a.dirx = d.x
-            a.diry = d.y
+            if ( mouse_aim ) then
+                local v=m_vec(x-aim.x2,y-aim.y2)
+                local d,l=v:getnorm()
+                a.dirX = d.x
+                a.dirY = d.y
+            else
+                a.dirX = aim.dirX 
+                a.dirY = aim.dirY
+            end
 
             sfx( snd.pew )
             a.list = bullets
@@ -843,11 +856,11 @@ a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3151515000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-012800001a735187351a7301d7401d7401d7401c7401c7401a735187351a7301d7401d7401d7401d7450000024735217352373024740247402474023740237402473521735237302474024740247402474000000
-011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+002300001a735187351a7301d7401d7401d7401c7401c7401a735187351a7301d7401d7401d7401d7450000024735217352373024740247402474023740237402473521735237302474024740247402474000000
+002300002673524735267302974029740297402874028740267352473526730297402974029740297452400024735217352373024740247402474023740237402473521735237302474024740247402474000000
+012300002670024700267002970029700297002870028700267002470026700297002970029700297002400024700217002370024700247002470023700237002470021700237002470024700247002470000000
+012300001850015500175001850018500185001750017500185001550017500185001850018500185000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+012300002450021500235002450023500245002450021500235002450023500245002450024500245000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 010300000c614106201d6302b6302d6151d7001c7001c7001a700187001a7001d7001d7001d7001d7000000024700217002370024700247002470023700237002470021700237002470024700247002470000000
 01070000373331d351290002b0002d0002f0001a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 010600001a15418142000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -908,8 +921,8 @@ __sfx__
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __music__
-03 00424344
-00 41424344
+01 00414344
+02 01424344
 00 41424344
 00 41424344
 00 41424344
