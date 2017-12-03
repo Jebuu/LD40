@@ -13,6 +13,7 @@ ly = 56 -- left position y
 rx = 80 -- right position x
 ry = 56 -- right position y
 debug = true
+hittaken = false
 dash_target  = {
     x = 0,
     y = 0
@@ -152,8 +153,15 @@ function title_draw()
 end
 
 function game_draw()
+    if ( hittaken == true ) then
+        for i = 0, 16 do
+        pal(i, i + 7)
+        end
+        hittaken = false
+    end
     rectfill( 0, 0, 127, 127, 11 )
     map( 0, 0, 0, 0 )
+    pal()
 
     actor_draw()
     
@@ -162,6 +170,7 @@ function game_draw()
     end
 
     camera( flr(camposx + camoffsetx), flr(camposy + camoffsety) )
+    draw_juicebar()
 end
 
 function debug_draw()
@@ -193,6 +202,8 @@ end
 function move_enemy( a )
     if ( get_distance( a.pt, player.pt ) < hit_margin ) then
         juice_count -= 1
+        hittaken = true
+        create_screenshaker(1, 10)
         sfx(snd.lose_juice)
         del( enemies, a)
     else
@@ -331,7 +342,7 @@ function start_dash()
     end
     sfx(snd.dash)
     player.sprite = 65
-    create_screenshaker( 0, 5 )
+    create_screenshaker( 0, 2 )
     switch_state ( 1 )
 end
 
@@ -482,6 +493,17 @@ function trail( object, frame, framecount, ratio, animspeed, xoffset, yoffset, a
         local p = create_particle( object.pt.x + xoffset, object.pt.y + yoffset, 0, 0, 100, frame, framecount, animspeed)
         p.destroyafteranim = true
     end
+end
+
+function draw_juicebar()
+    local rndm = 0
+    local text = 'juice '
+    if( juice_count != 0 ) then
+        rndm = rnd(15)
+        if ( juice_count > 1 ) text = text..tostr(juice_count)
+        rectfill(0, 120, 128 * juice_count / 10, 128, rndm)
+    end
+    print( text, 3, 121, rndm + 7)
 end
 
 
