@@ -108,14 +108,14 @@ function game_update()
         return
     end -- function make_actor(t, x, y, dirx, diry, sf, fc, as)
     if ( t %  simple_round(100, juice_count) == 0) then -- adjust enemy the spawn rate here 
-        if ( flr( rnd( 2 ) ) ) then 
+        if ( flr( rnd( 2 ) ) == 0 ) then 
             make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0, 128, 4, 10)
         else
             make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0, 128, 4, 10)
         end
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
-        if ( flr( rnd( 2 ) ) ) then 
+        if ( flr( rnd( 2 ) ) == 0 ) then 
             make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0)
         else
             make_actor(2, flr( rnd( 2 ) ) * 128, rnd ( 128 ), 0, 0)
