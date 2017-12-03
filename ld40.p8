@@ -12,7 +12,7 @@ lx = 40 -- left position x
 ly = 56 -- left position y
 rx = 80 -- right position x
 ry = 56 -- right position y
-debug = false
+debug = true
 dash_target  = {
     x = 0,
     y = 0
@@ -90,12 +90,20 @@ function game_update()
     if ( juice_count < 0 ) then
         title_init()
         return
-    end
-    if ( t %  simple_round(50, juice_count) == 0) then -- adjust enemy the spawn rate here
-        make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0) -- currently spawning only from the sides
+    end -- function make_actor(t, x, y, dirx, diry, sf, fc, as)
+    if ( t %  simple_round(50, juice_count) == 0) then -- adjust enemy the spawn rate here 
+        if ( flr( rnd( 2 ) ) ) then 
+            make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0, 128, 4, 10)
+        else
+            make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0, 128, 4, 10)
+        end
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
-        make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0) -- currently spawning only from top/bottom
+        if ( flr( rnd( 2 ) ) ) then 
+            make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0)
+        else
+            make_actor(2, flr( rnd( 2 ) ) * 128, rnd ( 128 ), 0, 0)
+        end
     end
     move_actor()
 
@@ -251,17 +259,17 @@ function actor_draw()
     end
 
     for j in all( juices ) do
-        spr( j.type, j.pt.x, j.pt.y)
+        spr( 160, j.pt.x, j.pt.y)
     end
 end
 
-function make_actor(t, x, y, dirx, diry)
+function make_actor(t, x, y, dirx, diry, sf, fc, as)
     local a = {
         life = 1,
         type = t,
-        sf = 128, 
-        fc = 4,
-        as = 10, 
+        sf = sf, 
+        fc = fc,
+        as = as, 
         pt = {
         x = x,
         y = y
@@ -277,7 +285,6 @@ function make_actor(t, x, y, dirx, diry)
                         del (self.list, self)
                     end
                  end
-
     }
 
     if ( actor_count() < max_actors ) then
