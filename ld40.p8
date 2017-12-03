@@ -12,7 +12,7 @@ lx = 40 -- left position x
 ly = 56 -- left position y
 rx = 80 -- right position x
 ry = 56 -- right position y
-debug = true
+debug = false
 hittaken = false
 mouse_aim = true
 dash_target  = {
@@ -110,14 +110,14 @@ function game_update()
         return
     end -- function make_actor(t, x, y, dirx, diry, sf, fc, as)
     if ( t %  simple_round(100, juice_count) == 0) then -- adjust enemy the spawn rate here 
-        if ( flr( rnd( 2 ) ) ) then 
+        if ( flr( rnd( 2 ) ) == 0 ) then 
             make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0, 128, 4, 10)
         else
             make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0, 128, 4, 10)
         end
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
-        if ( flr( rnd( 2 ) ) ) then 
+        if ( flr( rnd( 2 ) ) == 0 ) then 
             make_actor(2, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 0)
         else
             make_actor(2, flr( rnd( 2 ) ) * 128, rnd ( 128 ), 0, 0)
@@ -147,10 +147,10 @@ function game_update()
     end
     if ( player.state == 0 ) then -- platform state
         -- start the dash
-        if ( btn( 4 ) ) then start_dash() end
+        if ( btn( 4 ) or mouse.btn_state[2] ) then start_dash() end
         -- shoot
         -- shooting with arrow keys
-        if ( btn( 5 ) and t > st + (8 - juice_count) ) then
+        if ( (btn( 5 ) or mouse.btn_state[1]) and t > st + (6 - juice_count) ) then
             st = t
             make_actor(3, player.pt.x, player.pt.y)
         end
