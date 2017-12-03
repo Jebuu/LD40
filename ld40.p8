@@ -82,6 +82,7 @@ function game_init()
     mouse=m_mouse()
     gamestate = 1 -- main gameplay state
     t = 0 -- frame counter
+    st = -1 -- shoot frame counter
 end
 
 function _update()
@@ -149,7 +150,10 @@ function game_update()
         if ( btn( 4 ) ) then start_dash() end
         -- shoot
         -- shooting with arrow keys
-        if ( btn( 5 ) ) then make_actor(3, player.pt.x, player.pt.y) end
+        if ( btn( 5 ) and t > st + (8 - juice_count) ) then
+            st = t
+            make_actor(3, player.pt.x, player.pt.y)
+        end
     elseif ( player.state == 1 ) then -- dash state
         dash()
     end
