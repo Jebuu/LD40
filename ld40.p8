@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 14
 __lua__
-
+globald=0
 -- globals
 camposx = 0
 camposy = 0
@@ -37,6 +37,7 @@ end
 
 function title_init()
     music( mus.title )
+    poke(0x5f2d, 1)
     gamestate = 0 -- title state
     bullets = {}
     enemies = {}
@@ -47,6 +48,16 @@ function title_init()
     dash_speed = 2
     shaker = {}
     particles = {}
+    aim = {}
+    clear_aim()
+end
+
+function clear_aim()
+    aim.x = 0
+    aim.y = 0
+    aim.x2 = 0
+    aim.y2 = 0
+    aim.a = 0
 end
 
 function game_init()
@@ -55,10 +66,12 @@ function game_init()
             x = rx, -- spawn player on right platform in the start
             y = ry
         },
+        tele_max = 10,
         sprite = 64,
         state = 0, -- current state
         stimer = 0 -- state timer
     }
+    mouse=m_mouse()
     gamestate = 1 -- main gameplay state
     t = 0 -- frame counter
 end
@@ -81,11 +94,13 @@ end
 function game_update()
     t += 1 -- increase the frame counter
 
+    mouse:update()
+
     if ( juice_count < 0 ) then
         title_init()
         return
     end
-    if ( t %  simple_round(50, juice_count) == 0) then -- adjust enemy the spawn rate here
+    if ( t %  simple_round(100, juice_count) == 0) then -- adjust enemy the spawn rate here
         make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 0) -- currently spawning only from the sides
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
@@ -94,36 +109,51 @@ function game_update()
     move_actor()
 
     player.stimer += 1
+    if ( btn( 3 ) ) then
+        set_aim( player.pt.x, player.pt.y, 3)
+    elseif ( btn( 0 ) ) then
+        set_aim( player.pt.x, player.pt.y, 0)
+    elseif ( btn( 1 ) ) then
+        set_aim( player.pt.x, player.pt.y, 1)
+    elseif ( btn( 2 ) ) then
+        set_aim( player.pt.x, player.pt.y, 2)
+    end
     if ( player.state == 0 ) then -- platform state
-        -- shooting with arrow keys
-        if ( btnp( 0 ) and btnp( 2 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, -1, -1)
-        elseif ( btnp( 1 ) and btnp( 2 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, 1, -1)
-        elseif ( btnp( 1 ) and btnp( 3 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, 1, 1)
-        elseif ( btnp( 0 ) and btnp( 3 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, -1, 1)
-        elseif ( btnp( 3 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, 0, 1)
-        elseif ( btnp( 0 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, -1, 0)
-        elseif ( btnp( 1 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, 1, 0)
-        elseif ( btnp( 2 ) ) then
-            make_actor(3, player.pt.x, player.pt.y, 0, -1)
-        end
         -- start the dash
         if ( btn( 4 ) ) then start_dash() end
-   
+        -- shoot
+        -- shooting with arrow keys
+        if ( btn( 5 ) ) then make_actor(3, player.pt.x, player.pt.y) end
     elseif ( player.state == 1 ) then -- dash state
         dash()
     end
     camera_position()
 end
 
+--left
+--right
+-- top
+-- bototm
+function set_aim(x, y, btn)
+    local sign = 1
+    if ( btn == 0 or btn == 2 ) then
+        sign = -1
+    end
+    aim.x = x + 4
+    aim.y = y
+    radius = 60
+    if (aim.a > 360) then aim.a = 20 end
+    if (aim.a < 0) then aim.a = 340 end
+
+    aim.a += 5 * sign;
+    aim.x2=aim.x + radius * cos(aim.a/360)
+    aim.y2=aim.y + radius * sin(aim.a/360)
+    aim.c = 3
+end
+
 function _draw()
     cls()
+    
     if( gamestate == 0 ) then
         title_draw()
     else
@@ -150,6 +180,13 @@ function game_draw()
         debug_draw()
     end
 
+    -- draw aim
+    --line(aim.x, aim.y, aim.x2, mouse.pos.x, mouse.pos.y)
+
+    if ( mouse ~= nil ) then
+        mouse:draw()
+    end
+
     camera( flr(camposx + camoffsetx), flr(camposy + camoffsety) )
 end
 
@@ -162,7 +199,7 @@ function debug_draw()
     print( "b: "..count( bullets ), 1, 97, 7 )
     
     rectfill( 0, 102, 30, 108, 5 )
-    print( "y: "..sin ( player.stimer / 100 ), 1, 103, 7 )
+    print( "y: "..globald, 1, 103, 7 )
 end
 
 function move_actor()
@@ -210,9 +247,9 @@ function move_juice( a )
     end
 end
 
-function move_bullet( b )
-    b.pt.x += b.dirx * bullet_speed
-    b.pt.y += b.diry * bullet_speed
+function move_bullet( b )  
+    b.pt.x -= bullet_speed * b.dirX
+    b.pt.y -= bullet_speed * b.dirY
     
     if ( b.pt.x > 128 or b.pt.x < 0 or b.pt.y > 128 or b.pt.y < 0 ) then
         del( bullets, b)
@@ -241,7 +278,7 @@ function actor_draw()
     end
 end
 
-function make_actor(t, x, y, dirx, diry)
+function make_actor(t, x, y, a)
     local a = {
         life = 1,
         type = t,
@@ -249,8 +286,7 @@ function make_actor(t, x, y, dirx, diry)
         x = x,
         y = y
         },
-        dirx = dirx,
-        diry = diry,
+        a = a,
         list = nil,
         take_damage = function ( self, dmg )
                     self.life -= dmg
@@ -272,6 +308,11 @@ function make_actor(t, x, y, dirx, diry)
             add( a.list, a )
         end
         if ( a.type == 3 ) then -- bullet
+            local v=m_vec(x-aim.x2,y-aim.y2)
+	        local d,l=v:getnorm()
+            a.dirX = d.x
+            a.dirY = d.y
+
             sfx( snd.pew )
             a.list = bullets
             add( a.list, a )
@@ -301,6 +342,7 @@ function start_dash()
 end
 
 function dash()
+    clear_aim()
     if ( get_distance ( player.pt, dash_target ) < 1 ) then
         end_dash()
     else
@@ -438,6 +480,123 @@ function explosion( count, force, x, y )
     create_screenshaker(0, 3)
 end
 
+function m_mouse()
+	local o = 
+	{
+		pos=m_vec(0,0),
+		
+		btn_left=1,
+		btn_right=2,
+		btn_mid=4,
+		
+		on_wall=false,
+		
+		btn_state=
+		{
+			[1]=false,
+			[2]=false,
+			[4]=false,
+		},
+		
+		btn_state_prev=
+		{
+			[1]=false,
+			[2]=false,
+			[4]=false,
+		},
+
+		update=function(self)
+			self.pos.x = stat(32)
+			self.pos.y = stat(33)
+            
+			for k,v in pairs(self.btn_state) do
+				self.btn_state[k]=band(stat(34),k)!=0
+			end
+			
+			self.on_wall=fget(mget(self.pos.x/8,self.pos.y/8),0) 
+				or self.pos.x<=-64 or self.pos.y<=-64
+				or self.pos.x>=64 or self.pos.y>=64
+
+            aim.x2 = self.pos.x
+            aim.y2 = self.pos.y
+		end,
+		
+		post_update=function(self)
+			for k,v in pairs(self.btn_state_prev) do
+				self.btn_state_prev[k]=band(stat(34),k)!=0
+			end
+		end,
+		--[[
+		todo: knock enemy into air. hit while airborn to kill. maybe bubble bobble style levels.
+		fire spit enemy
+		electric enemy
+		multihit enemy (shell)
+		teleporter (attack forward and then behind)
+		]]
+		draw=function(self)
+			--if (p1.dash_count>0) pal(7,8)
+			--spr(16,self.pos.x-3,self.pos.y-3)
+			
+			local v=m_vec(self.pos.x-(player.pt.x),self.pos.y-(player.pt.y))
+			local d,l=v:getnorm()
+			
+			local off=2*l*0.1
+			self:draw_cursor(off,0,2)
+			self:draw_cursor(-off,0,2)
+			self:draw_cursor(0,off,2)
+			self:draw_cursor(0,-off,2)
+			self:draw_cursor(0,0,8)
+		end,
+		
+		draw_cursor=function(self,xo,yo,c)
+			local v=m_vec(self.pos.x-(player.pt.x+xo),self.pos.y-(player.pt.y+yo))
+			local d,l=v:getnorm()
+			local ml=player.tele_max
+			local len=min(l,4)
+
+            local p2x = player.pt.x+(d.x*min(l,player.tele_max))
+            local p2y = player.pt.y+(d.y*min(l,player.tele_max))
+			pset(p2x, p2y ,1)
+			line(self.pos.x,self.pos.y,self.pos.x-d.x*len,self.pos.y-d.y*len,c)
+		end,
+		
+		btn=function(self,id)
+			return self.btn_state[id]==true
+		end,
+		
+		btnp=function(self,id)
+			return self.btn_state[id]==true and self.btn_state_prev[id]==false
+		end,
+	}
+	
+	--detect if a button was pressed when this mouse
+	--was created.
+	for k,v in pairs(o.btn_state_prev) do
+		o.btn_state_prev[k]=band(stat(34),k)!=0
+	end
+	
+	return o;
+end
+--make 2d vector
+function m_vec(x,y)
+	local v=
+	{
+		x=x,
+		y=y,
+		
+  --get the length of the vector
+		getlength=function(self)
+			return sqrt(self.x^2+self.y^2)
+		end,
+		
+  --get the normal of the vector
+		getnorm=function(self)
+			local l = self:getlength()
+			return m_vec(self.x / l, self.y / l),l;
+		end,
+	}
+	return v
+end
 
 __gfx__
 0000000000000000000000000000000022444422000000007dd7dddd000000000000000000000000000000000000000000000000000000000000000000000000
