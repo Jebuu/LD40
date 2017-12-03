@@ -75,7 +75,7 @@ function game_init()
         sf = 64, 
         fc = 4,
         as = 5, 
-        sprite = 64,
+        sprite = 70,
         state = 0, -- current state
         stimer = 0 -- state timer
     }
@@ -110,9 +110,9 @@ function game_update()
     end -- function make_actor(t, x, y, sf, fc, as)
     if ( t %  simple_round(100, juice_count) == 0) then -- adjust enemy the spawn rate here 
         if ( flr( rnd( 2 ) ) == 0 ) then 
-            make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 128, 4, 10)
+            make_actor(1, flr( rnd( 2 ) ) * 128, rnd( 128 ), 0, 4, 10)
         else
-            make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 128, 4, 10)
+            make_actor(1, rnd( 128 ), flr( rnd( 2 ) ) * 128, 0, 4, 10)
         end
     end
     if ( t % 100 == 50) then -- adjust juice the spawn rate here
@@ -164,12 +164,12 @@ end
 --right
 -- top
 -- bototm
-function set_aim(x, y, dirX, dirY)
+function set_aim(x, y, dirx, diry)
     mouse_aim = false
     aim.x = x + 4
     aim.y = y
-    aim.dirX = dirX
-    aim.dirY = dirY
+    aim.dirx = dirx
+    aim.diry = diry
     aim.c = 3
 end
 
@@ -205,9 +205,6 @@ function game_draw()
         debug_draw()
     end
 
-    -- draw aim
-    --line(aim.x, aim.y, aim.x2, mouse.pos.x, mouse.pos.y)
-
     if ( mouse ~= nil ) then
         mouse:draw()
     end
@@ -217,6 +214,9 @@ function game_draw()
 end
 
 function debug_draw()
+    -- draw aim
+    line(player.pt.x, player.pt.y, mouse.pos.x, mouse.pos.y, 5)
+
     -- show current value of actors
     rectfill( 0, 90, 30, 96, 5 )
     print( "juice: "..juice_count, 1, 91, 7 )
@@ -224,8 +224,8 @@ function debug_draw()
     rectfill( 0, 96, 30, 102, 5 )
     print( "b: "..count( bullets ), 1, 97, 7 )
     
-    --rectfill( 0, 102, 30, 108, 5 )
-    --print( "y: "..aim.x2, 1, 103, 7 )
+    rectfill( 0, 102, 30, 108, 5 )
+    print( "a: "..atan2( mouse.pos.x - player.pt.x, player.pt.y - mouse.pos.y ), 1, 103, 7 )
 end
 
 function move_actor()
@@ -250,7 +250,7 @@ function move_enemy( e )
         sfx(snd.lose_juice)
         del( enemies, e)
     else
-        move_towards_point ( e, player.pt, 1, 5 )
+        move_towards_point ( e, player.pt, e.spd, e.crv )
     end
 end
 
@@ -278,8 +278,8 @@ function move_juice( a )
 end
 
 function move_bullet( b )  
-    b.pt.x -= bullet_speed * b.dirX
-    b.pt.y -= bullet_speed * b.dirY
+    b.pt.x -= bullet_speed * b.dirx
+    b.pt.y -= bullet_speed * b.diry
     
     if ( b.pt.x > 128 or b.pt.x < 0 or b.pt.y > 128 or b.pt.y < 0 ) then
         del( bullets, b)
@@ -311,7 +311,17 @@ function actor_draw()
     if ( player.state == 1) then
         spr( anim( player, player.sf, player.fc, player.as ), player.pt.x, player.pt.y )
     elseif ( player.state == 0) then
-        spr( player.sprite, player.pt.x, player.pt.y )
+        local aim_angle = atan2( mouse.pos.x - player.pt.x, player.pt.y - mouse.pos.y )
+        local flipx = ( aim_angle >= 0.25 and aim_angle <= 0.75 )
+        
+        if (aim_angle >= 0.65 and aim_angle <= 0.85) then -- aiming up
+            player.sprite = 72
+        elseif ( aim_angle >= 0.15 and aim_angle <= 0.3 ) then -- aiming down
+            player.sprite = 89
+        else
+            player.sprite = 70
+        end
+        spr( player.sprite, player.pt.x, player.pt.y, 1, 1, flipx )
     end
 
     for b in all( bullets ) do
@@ -359,8 +369,22 @@ function make_actor(t, x, y, sf, fc, as)
                  end
     }
 
+
     if ( actor_count() < max_actors ) then
         if ( a.type == 1 ) then -- enemy
+            if ( flr( rnd( 6 ) ) ~= 0 ) then
+                a.spd = 1
+                a.crv = 5
+                a.sf = 128 -- whirling blade
+            elseif ( true ) then
+                a.spd = 1
+                a.crv = 1
+                a.sf = 149 -- flying crew member
+            else
+                a.spd = 2
+                a.crv = 10
+                a.sf = 165 -- spinning disc
+            end
             a.list = enemies
             add( a.list, a )
         end
@@ -372,11 +396,11 @@ function make_actor(t, x, y, sf, fc, as)
             if ( mouse_aim ) then
                 local v=m_vec(x-aim.x2,y-aim.y2)
                 local d,l=v:getnorm()
-                a.dirX = d.x
-                a.dirY = d.y
+                a.dirx = d.x
+                a.diry = d.y
             else
-                a.dirX = aim.dirX 
-                a.dirY = aim.dirY
+                a.dirx = aim.dirx 
+                a.diry = aim.diry
             end
 
             sfx( snd.pew )
@@ -420,7 +444,7 @@ function dash()
 end
 
 function end_dash()
-    player.sprite = 64
+    player.sprite = 70
     switch_state ( 0 ) -- back to idle state
 end
 
@@ -618,7 +642,7 @@ function m_mouse()
 
             local p2x = player.pt.x+(d.x*min(l,player.tele_max))
             local p2y = player.pt.y+(d.y*min(l,player.tele_max))
-			pset(p2x, p2y ,1)
+			pset(p2x, p2y, 1)
 			line(self.pos.x,self.pos.y,self.pos.x-d.x*len,self.pos.y-d.y*len,c)
 		end,
 		
