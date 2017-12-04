@@ -766,7 +766,7 @@ end
 
 function draw_juicebar()
     local rndm = 0
-    local text = 'ï¿½ '
+    local text = '’ '
     if( juice_count != 0 ) then
         rndm = rnd(15)
         if ( juice_count > 1 ) text = text..tostr(juice_count)
