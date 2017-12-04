@@ -190,8 +190,10 @@ function _draw()
 end
 
 function title_draw()
-    print( "ludum dare 40", 37, 70, 14 )
-    print( "press z or x to start", 34, 80, 12 )
+    rectfill( 0, 0, 127, 127, 11 )
+    map( 0, 0, 0, 0 )
+    print( "mo' juice mo' problems", 24, 50, 1 )
+    print( "press z or x to start", 24, 74, 1 )
 end
 
 function game_draw()
